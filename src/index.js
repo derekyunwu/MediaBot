@@ -1,17 +1,19 @@
 require('dotenv').config()
 
 const Discord = require('discord.js')
+const fs = require('fs')
 const client = new Discord.Client()
-const ytsr = require('ytsr')
+
+client.commands = new Discord.Collection()
+
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+	const command = require(`../commands/${file}`);
+	client.commands.set(command.name, command);
+}
 
 const PREFIX = '!'
-const query = {
-    'scenes': 'mentalist best scenes',
-    'soundtracks': 'mentalist soundtrack'
-}
-const options = {
-    limit: 20
-}
 
 client.on('ready', () => {
     console.log('MediaBot is online')
@@ -25,24 +27,14 @@ client.on('message', async msg => {
         .trim()
         .substring(PREFIX.length)
         .split(/\s+/)
-    
-    if (CMD_NAME !== "search") return
-    if (args.length === 0) return msg.reply("this is an invalid search query!")
 
-    const result = await ytsr(args.join(), options)
-        .catch(e => {
-            msg.reply('looks like there was an error retrieving Youtube results')
-        })
-    
-    const videos = result.items.filter(i => i.type === 'video')
-    const length = videos.length
+    if (!client.commands.has(CMD_NAME)) return
 
-    const randomInt = Math.floor(Math.random() * length)
-    const video = videos[randomInt]
-
-    if (!video) return msg.reply('the Youtube search came up empty!')
-    
-    msg.channel.send(video.url)
+    try {
+        client.commands.get(CMD_NAME).execute(msg, args)
+    } catch (err){
+        msg.reply('an error occurred while executing that instruction!')
+    }
 })
 
 client.login(process.env.DISCORDJS_BOT_TOKEN)
