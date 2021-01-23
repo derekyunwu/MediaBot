@@ -31,10 +31,9 @@ module.exports = {
                 (parseInt(m.content) >= 1 && parseInt(m.content) <= 3) 
             )
             
-            
             let response = await message.channel.awaitMessages(filter, {max: 1, maxMatches: 1})
 
-            message.channel.send(videos[response.first().content - 1].url)
+            message.channel.send(videos[parseInt(response.first().content) - 1].url)
         } else {
             message.channel.send(videos[0].url)
         }
